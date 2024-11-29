@@ -1,0 +1,93 @@
+在多个进程共享资源时，通过某些机制来协调它们的操作，防止发生数据竞争或资源冲突。同步通常用于确保多个进程按照一定的顺序执行或在特定条件下进行协调。常见的进程间同步机制有：
+1. 互斥锁（Mutex）
+    互斥锁是一种同步机制，用于确保同一时间只有一个进程（或线程）能够访问共享资源。当一个进程获得互斥锁时，其他进程无法访问被保护的资源，直到锁被释放。
+    用法：互斥锁通常用于保护共享资源（如共享内存、文件、数据库等）的访问。
+        特点：
+        只有一个进程可以获取锁。
+        锁的持有者释放锁后，其他等待的进程才能获取锁。
+        示例（C语言）：
+            pthread_mutex_t mutex;
+            pthread_mutex_init(&mutex, NULL);
+            pthread_mutex_lock(&mutex);  // 获取锁
+            // 访问共享资源
+            pthread_mutex_unlock(&mutex);  // 释放锁
+2. 信号量（Semaphore）
+信号量是一种用于控制进程对共享资源访问的同步机制。信号量是一种计数器，可以用来控制同时访问资源的进程数量。信号量有两种主要类型：
+    二进制信号量（Binary Semaphore）：只允许两种状态，类似于互斥锁。
+    计数信号量（Counting Semaphore）：允许多个进程访问共享资源，计数值决定了最大并发进程数。
+        操作：
+        wait()：请求资源，将信号量值减一，如果信号量值为0，进程会阻塞。
+        signal()：释放资源，将信号量值加一，通知其他进程资源可用。
+            示例（C语言）：
+            sem_t sem;
+            sem_init(&sem, 0, 1);  // 初始化信号量，值为1，表示可用资源1个
+            sem_wait(&sem);  // 请求资源，信号量值减1
+            // 访问共享资源
+            sem_post(&sem);  // 释放资源，信号量值加1
+3. 条件变量（Condition Variable）
+    条件变量用于线程（或进程）之间的同步，它允许进程在特定条件下阻塞，直到某个条件满足时再继续执行。通常，条件变量与互斥锁一起使用，确保在检查条件的过程中不会有其他进程修改共享状态。
+    操作：
+    wait()：当条件不满足时，进程进入阻塞状态。
+    signal()（或 notify()）：通知一个等待的进程条件已满足。
+    broadcast()（或 notify_all()）：通知所有等待的进程条件已满足。
+    示例（C语言）：
+    pthread_mutex_t mutex;
+    pthread_cond_t cond;
+    pthread_mutex_lock(&mutex);
+    while (condition_not_met) {
+        pthread_cond_wait(&cond, &mutex);  // 等待条件满足
+    }
+    // 条件满足，继续执行
+    pthread_mutex_unlock(&mutex);
+    pthread_cond_signal(&cond);  // 唤醒一个等待的进程
+4. 读写锁（Read-Write Lock）
+    读写锁允许多个进程同时读取共享资源，但写操作会被独占。即，当一个进程正在进行写操作时，其他进程不能进行任何读写操作，而当没有进程写数据时，多个进程可以同时读取数据。
+    特点：
+    读锁（Shared Lock）：多个进程可以同时持有读锁。
+    写锁（Exclusive Lock）：当一个进程持有写锁时，其他进程不能读写资源。
+    示例（C语言）：
+        pthread_rwlock_t rwlock;
+        pthread_rwlock_init(&rwlock, NULL);
+        // 读锁
+        pthread_rwlock_rdlock(&rwlock);
+        // 进行读操作
+        pthread_rwlock_unlock(&rwlock);
+        // 写锁
+        pthread_rwlock_wrlock(&rwlock);
+        // 进行写操作
+        pthread_rwlock_unlock(&rwlock);
+5. 屏障（Barrier）
+    屏障是一种同步机制，允许一组进程（或线程）在某个同步点处等待，直到所有进程都到达屏障点后，才能一起继续执行。常用于并行计算中，确保所有进程同步到某个阶段后再继续执行。
+    示例（C语言）：
+        pthread_barrier_t barrier;
+        pthread_barrier_init(&barrier, NULL, num_threads);
+        pthread_barrier_wait(&barrier);  // 等待其他进程达到屏障
+6. 自旋锁（Spinlock）
+    自旋锁与互斥锁类似，但它在等待锁时不会让出CPU，而是不断地循环检查锁是否可用，直到获得锁。这种方式在锁争用不严重的情况下效率较高，但如果锁竞争激烈时会浪费大量CPU资源。
+    特点：
+    在等待锁时不会挂起线程，而是持续检查锁状态。
+    适用于锁持有时间很短、竞争不激烈的场景。
+    示例（C语言）：
+        pthread_spinlock_t spinlock;
+        pthread_spin_init(&spinlock, PTHREAD_PROCESS_PRIVATE);
+        pthread_spin_lock(&spinlock);  // 获取锁
+        // 访问共享资源
+        pthread_spin_unlock(&spinlock);  // 释放锁
+7. 信号（Signals）
+    信号是一种用于通知进程发生某个事件的机制。信号本身并不直接同步进程之间的执行顺序，但可以用来通知进程某个事件的发生或需要处理的情况。通过信号，进程可以接收外部中断，执行相应的操作。
+    常用信号：
+    SIGINT：中断信号，通常是终止进程。
+    SIGKILL：强制杀死进程。
+    SIGUSR1、SIGUSR2：用户自定义信号。
+    示例（C语言）：
+    signal(SIGINT, handler);  // 安装信号处理器，处理SIGINT信号
+    raise(SIGINT);  // 发送SIGINT信号给当前进程
+
+总结：
+    互斥锁：确保同一时刻只有一个进程访问资源。
+    信号量：控制并发进程的数量。
+    条件变量：在特定条件满足时协调进程执行。
+    读写锁：允许多个读进程并发，但写操作需要独占。
+    自旋锁：锁竞争较轻时使用的高效同步方式。
+    屏障：同步多个进程的执行，确保同时继续。
+    信号：用于进程间的异步通知。
