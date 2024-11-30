@@ -1,0 +1,107 @@
+一、常用命令
+1. 系统信息和硬件查看
+    uname -a: 查看系统的内核版本及其他信息。
+    hostname: 查看当前主机的名称。
+    lsb_release -a: 查看操作系统的发行版信息。
+    top: 动态查看系统的进程和性能信息。
+    htop: 类似top，但提供了更友好的界面（需要安装）。
+    dmesg: 查看内核环缓存的消息，通常用于查看启动日志或硬件相关的错误信息。
+    lscpu: 显示CPU的详细信息。
+    free -h: 查看内存使用情况。
+    df -h: 查看磁盘使用情况。
+    du -sh /path/to/directory: 查看指定目录的磁盘使用情况。
+    lsblk: 查看系统上的磁盘设备和分区信息。
+2. 进程管理
+    ps aux: 显示所有正在运行的进程。
+    top: 动态显示进程信息，支持按CPU、内存等资源排序。
+    htop: 类似top，但提供更好的交互界面。
+    kill PID: 终止指定PID的进程。
+    kill -9 PID: 强制终止指定PID的进程。
+    pkill <name>: 根据进程名称终止进程。
+    nice 和 renice: 调整进程的优先级。
+3. 网络管理
+    ifconfig: 显示或配置网络接口的配置信息（在较新的系统中被ip命令替代）。
+    ip addr: 显示网络接口的详细信息。
+    netstat -tuln: 查看当前系统监听的网络端口。
+    ss -tuln: 与netstat类似，但效率更高。
+    ping <host>: 检查网络连接性。
+    traceroute <host>: 跟踪数据包经过的路径。
+    nslookup <domain>: 查询域名系统（DNS）信息。
+    tcpdump: 捕获和分析网络包。
+    iftop: 查看实时网络流量（需要安装）。
+4. 磁盘和文件系统管理
+    fdisk -l: 查看磁盘分区情况。
+    parted -l: 查看磁盘分区情况（较新的命令）。
+    mount: 查看当前挂载的文件系统。
+    umount <device>: 卸载文件系统。
+    tune2fs -l /dev/sda1: 查看ext4文件系统的详细信息。
+    smartctl -a /dev/sda: 查看磁盘的健康状况和SMART信息。
+5. 日志文件
+    tail -f /var/log/syslog: 查看系统日志文件的最新内容。
+    journalctl -xe: 查看systemd日志。
+    less /var/log/messages: 查看系统日志。
+    grep: 用于在日志文件中查找特定的字符串。
+
+二、性能排查手段
+1. CPU性能排查
+    top/htop:
+        通过top或htop查看CPU的使用情况。特别是注意%us（用户空间占用）、%sy（内核空间占用）以及%id（空闲CPU时间）。
+    mpstat:
+        mpstat -P ALL 1: 显示所有CPU核心的使用情况。
+    uptime:
+        uptime: 查看系统的负载情况，load average反映了系统的负载。
+    iostat:
+        iostat -c 1: 查看CPU的使用情况及I/O性能。
+2. 内存性能排查
+    free -h:
+        查看内存使用情况，关注used、free、buffers/cache和swap部分。
+    vmstat:
+        vmstat 1: 显示内存、进程、CPU、磁盘I/O等的统计信息。
+    top/htop:
+        top中的%MEM列显示进程的内存使用情况。
+    smem:
+        smem -r：显示进程内存的占用情况，更精确地表示虚拟内存、物理内存和共享内存。
+3. 磁盘性能排查
+    iostat:
+        iostat -x 1: 查看磁盘I/O性能。重点关注%util（磁盘使用率）、await（请求的平均等待时间）。
+    iotop:
+        iotop: 实时查看磁盘I/O的使用情况，需要root权限。
+    df -h:
+        查看磁盘的使用情况，检查磁盘空间是否已满。
+    dstat:
+        dstat -d: 查看磁盘的I/O性能。
+4. 网络性能排查
+    iftop:
+        实时显示网络接口的流量情况。
+    netstat -i:
+        查看每个网络接口的详细统计信息，检查丢包情况。
+    ss:
+        ss -s: 显示网络连接统计。
+    nload:
+        nload: 实时查看网络流量的入站和出站速度。
+5. 系统负载和进程排查
+    top/htop:
+        使用top或htop查看系统中各进程的资源占用情况，特别关注CPU和内存占用高的进程。
+    ps aux --sort=-%cpu:
+        显示CPU占用高的进程。
+    ps aux --sort=-%mem:
+        显示内存占用高的进程。
+6. Swap使用情况排查
+    swapon -s:
+        查看当前swap分区的使用情况。
+    vmstat:
+        vmstat 1：监控swap使用情况，重点关注si（从磁盘交换到内存的页面数）和so（从内存交换到磁盘的页面数）。
+7. 系统日志排查
+    dmesg:
+        查看内核启动时的消息，诊断硬件或驱动问题。
+    /var/log/syslog:
+        查看系统级的错误或警告日志。
+    journalctl:
+        journalctl -xe: 查看系统日志，特别是systemd相关的错误信息。
+三、其他有用的工具
+    strace:
+        用于跟踪系统调用和信号。strace -p <PID>可以查看指定进程的系统调用，帮助调试程序。
+    lsof:
+        查看当前系统打开的文件，包括网络连接、文件描述符等。lsof -i查看网络连接。
+    sar:
+        sar是一个强大的性能监控工具，可以查看CPU、内存、网络等系统资源的历史统计信息。
